@@ -1,0 +1,8 @@
+import { currentReading, hourly } from '../mock-data';
+import { DateRange, EnergyReading, ConnectionType } from '../types';
+export interface InverterAdapter { providerName:string; connectionType:ConnectionType; fetchCurrentReading(siteId:string):Promise<EnergyReading>; fetchHistoricalReadings(siteId:string, range:DateRange):Promise<EnergyReading[]>; }
+const readings = hourly.map((h,i)=>({...currentReading,timestamp:new Date(2026,5,29,i).toISOString(),currentPowerKw:h.value,sourceBreakdown:{solarKw:h.solar,windKw:h.wind}}));
+export class MockSolarAdapter implements InverterAdapter { providerName='Mock Solar'; connectionType:ConnectionType='cloud_api'; async fetchCurrentReading(){return {...currentReading, sourceBreakdown:{solarKw:currentReading.currentPowerKw,windKw:0}}} async fetchHistoricalReadings(){return readings.map(r=>({...r,sourceBreakdown:{solarKw:r.currentPowerKw,windKw:0}}));} }
+export class MockWindAdapter implements InverterAdapter { providerName='Mock Wind'; connectionType:ConnectionType='modbus'; async fetchCurrentReading(){return {...currentReading, sourceBreakdown:{solarKw:0,windKw:currentReading.currentPowerKw}}} async fetchHistoricalReadings(){return readings.map(r=>({...r,sourceBreakdown:{solarKw:0,windKw:r.currentPowerKw}}));} }
+export class MockHybridAdapter implements InverterAdapter { providerName='Mock Hybrid'; connectionType:ConnectionType='local_network'; async fetchCurrentReading(){return currentReading} async fetchHistoricalReadings(){return readings} }
+// Add real manufacturer cloud, local network, Modbus, CT clamp, or manual adapters here. Keep UI code using InverterAdapter so providers remain swappable.
